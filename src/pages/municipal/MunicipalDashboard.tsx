@@ -26,7 +26,16 @@ const MunicipalDashboard: React.FC = () => {
   }, [user, selectedCategory, issues]);
   
   const handleSelectCategory = (category: Category) => {
-    setSelectedCategory(category);
+    // If the same category is clicked, deselect it
+    if (selectedCategory === category) {
+      setSelectedCategory(null);
+    } else {
+      setSelectedCategory(category);
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedCategory(null);
   };
   
   const handleUpdateStatus = (issueId: number, newStatus: Issue['status'], proofPhoto?: string) => {
@@ -62,31 +71,31 @@ const MunicipalDashboard: React.FC = () => {
         
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-black text-white p-4 rounded-lg">
-            <div className="text-sm opacity-75">Resolved</div>
+          <div className="bg-green-600 text-white p-4 rounded-lg">
+            <div className="text-sm opacity-90">Resolved</div>
             <div className="text-2xl font-bold">{resolvedIssues}</div>
-            <div className="text-xs opacity-75">
+            <div className="text-xs opacity-90">
               {totalIssues > 0 ? Math.round((resolvedIssues / totalIssues) * 100) : 0}% completion
             </div>
           </div>
           
-          <div className="bg-white border border-gray-200 p-4 rounded-lg">
-            <div className="text-sm text-gray-600">Pending</div>
-            <div className="text-2xl font-bold text-black">
+          <div className="bg-orange-500 text-white p-4 rounded-lg">
+            <div className="text-sm opacity-90">Pending</div>
+            <div className="text-2xl font-bold">
               {issues.filter(issue => issue.city === user.city && issue.status === 'Pending').length}
             </div>
           </div>
           
-          <div className="bg-white border border-gray-200 p-4 rounded-lg">
-            <div className="text-sm text-gray-600">In Progress</div>
-            <div className="text-2xl font-bold text-black">
+          <div className="bg-blue-600 text-white p-4 rounded-lg">
+            <div className="text-sm opacity-90">In Progress</div>
+            <div className="text-2xl font-bold">
               {issues.filter(issue => issue.city === user.city && issue.status === 'In Progress').length}
             </div>
           </div>
           
-          <div className="bg-white border border-gray-200 p-4 rounded-lg">
-            <div className="text-sm text-gray-600">High Priority</div>
-            <div className="text-2xl font-bold text-black">
+          <div className="bg-red-600 text-white p-4 rounded-lg">
+            <div className="text-sm opacity-90">High Priority</div>
+            <div className="text-2xl font-bold">
               {issues.filter(issue => issue.city === user.city && (issue.priority === 'High' || issue.priority === 'Very High')).length}
             </div>
           </div>
@@ -97,6 +106,7 @@ const MunicipalDashboard: React.FC = () => {
       <CategorySelector 
         selectedCategory={selectedCategory} 
         onSelectCategory={handleSelectCategory}
+        onClearSelection={handleClearSelection}
         userCity={user.city}
       />
       
@@ -121,7 +131,7 @@ const MunicipalDashboard: React.FC = () => {
           <div className="p-4 border-b border-gray-200 flex justify-between items-center">
             <h2 className="text-lg font-semibold text-gray-900">Recent Issues</h2>
             <div className="text-sm text-gray-500">
-              Showing {Math.min(filteredIssues.length, 50)} of {filteredIssues.length} issues
+              Showing {Math.min(filteredIssues.length, 200)} of {filteredIssues.length} issues
             </div>
           </div>
           <div className="max-h-[500px] overflow-y-auto">

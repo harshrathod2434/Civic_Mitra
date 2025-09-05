@@ -15,11 +15,10 @@ const Settings: React.FC = () => {
       email: true,
       sms: false,
       push: true
-    },
-    theme: 'light'
+    }
   });
   
-  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications' | 'appearance'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>('profile');
   const [isEditing, setIsEditing] = useState(false);
   const [message, setMessage] = useState<{text: string, type: 'success' | 'error'} | null>(null);
 
@@ -40,16 +39,6 @@ const Settings: React.FC = () => {
         [name]: value
       }));
     }
-  };
-
-  const handleThemeChange = (theme: string) => {
-    setFormData(prev => ({
-      ...prev,
-      theme
-    }));
-    // In a real app, this would apply the theme
-    setMessage({text: `Theme changed to ${theme}`, type: 'success'});
-    setTimeout(() => setMessage(null), 3000);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -290,61 +279,6 @@ const Settings: React.FC = () => {
     </div>
   );
 
-  const renderAppearanceTab = () => (
-    <div className="space-y-6">
-      <h3 className="text-lg font-medium text-gray-900 mb-4">Theme Settings</h3>
-      
-      <div className="grid grid-cols-3 gap-4">
-        <div 
-          className={`border rounded-lg p-4 cursor-pointer transition-all ${formData.theme === 'light' ? 'border-blue-500 ring-2 ring-blue-500' : 'border-gray-200 hover:border-gray-300'}`}
-          onClick={() => handleThemeChange('light')}
-        >
-          <div className="h-24 bg-white border border-gray-200 rounded mb-2"></div>
-          <p className="text-center font-medium">Light</p>
-        </div>
-        
-        <div 
-          className={`border rounded-lg p-4 cursor-pointer transition-all ${formData.theme === 'dark' ? 'border-blue-500 ring-2 ring-blue-500' : 'border-gray-200 hover:border-gray-300'}`}
-          onClick={() => handleThemeChange('dark')}
-        >
-          <div className="h-24 bg-gray-800 border border-gray-700 rounded mb-2"></div>
-          <p className="text-center font-medium">Dark</p>
-        </div>
-        
-        <div 
-          className={`border rounded-lg p-4 cursor-pointer transition-all ${formData.theme === 'system' ? 'border-blue-500 ring-2 ring-blue-500' : 'border-gray-200 hover:border-gray-300'}`}
-          onClick={() => handleThemeChange('system')}
-        >
-          <div className="h-24 bg-gradient-to-r from-white to-gray-800 border border-gray-200 rounded mb-2"></div>
-          <p className="text-center font-medium">System</p>
-        </div>
-      </div>
-      
-      <div className="border-t border-gray-200 pt-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Text Size</h3>
-        
-        <div className="space-y-2">
-          <label htmlFor="text-size" className="block text-sm font-medium text-gray-700">Adjust text size</label>
-          <input 
-            type="range" 
-            id="text-size" 
-            min="80" 
-            max="120" 
-            step="10" 
-            defaultValue="100"
-            className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-            onChange={() => setMessage({text: 'Text size would be adjusted in a real app', type: 'success'})}
-          />
-          <div className="flex justify-between text-xs text-gray-500">
-            <span>Small</span>
-            <span>Default</span>
-            <span>Large</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="max-w-4xl mx-auto">
       <div className="bg-white shadow rounded-lg overflow-hidden">
@@ -377,19 +311,12 @@ const Settings: React.FC = () => {
           >
             Notifications
           </button>
-          <button
-            className={`px-6 py-3 font-medium text-sm focus:outline-none ${activeTab === 'appearance' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-            onClick={() => setActiveTab('appearance')}
-          >
-            Appearance
-          </button>
         </div>
         
         <div className="p-6">
           {activeTab === 'profile' && renderProfileTab()}
           {activeTab === 'security' && renderSecurityTab()}
           {activeTab === 'notifications' && renderNotificationsTab()}
-          {activeTab === 'appearance' && renderAppearanceTab()}
         </div>
       </div>
     </div>

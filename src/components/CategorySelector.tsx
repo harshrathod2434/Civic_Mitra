@@ -5,12 +5,14 @@ import { CATEGORIES, getCategoryStats } from '../data/mockData';
 interface CategorySelectorProps {
   selectedCategory: Category | null;
   onSelectCategory: (category: Category) => void;
+  onClearSelection?: () => void;
   userCity?: string;
 }
 
 const CategorySelector: React.FC<CategorySelectorProps> = ({ 
   selectedCategory, 
   onSelectCategory, 
+  onClearSelection,
   userCity 
 }) => {
   const categoryStats = getCategoryStats();
@@ -81,7 +83,24 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-      <h2 className="text-xl font-semibold text-black mb-4">Issue Categories</h2>
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold text-black">Issue Categories</h2>
+        {selectedCategory && (
+          <button
+            onClick={() => {
+              if (onClearSelection) {
+                onClearSelection();
+              } else {
+                // Fallback: trigger onSelectCategory with current category to deselect
+                onSelectCategory(selectedCategory);
+              }
+            }}
+            className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors duration-200"
+          >
+            Clear Selection
+          </button>
+        )}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {CATEGORIES.map((category) => {
           const stats = categoryStats[category];
