@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import ErrorBoundary from './components/ErrorBoundary';
+import LoadingFallback from './components/LoadingFallback';
 import DashboardLayout from './components/Layout/DashboardLayout';
 import MunicipalDashboard from './pages/municipal/MunicipalDashboard';
 import GovernmentDashboard from './pages/government/GovernmentDashboard';
@@ -23,39 +25,43 @@ const RoleBasedRoute: React.FC<{ children: React.ReactNode; role?: 'government' 
 
 const App: React.FC = () => {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Navigate to="/municipal" replace />} />
-          
-          {/* Municipal Routes */}
-          <Route path="/municipal" element={
-            <RoleBasedRoute role="municipal">
-              <DashboardLayout />
-            </RoleBasedRoute>
-          }>
-            <Route index element={<MunicipalDashboard />} />
-            <Route path="issues" element={<MunicipalDashboard />} />
-            <Route path="analytics" element={<div>Municipal Analytics</div>} />
-            <Route path="settings" element={<Settings />} />
-          </Route>
-          
-          {/* Government Routes */}
-          <Route path="/government" element={
-            <RoleBasedRoute role="government">
-              <DashboardLayout />
-            </RoleBasedRoute>
-          }>
-            <Route index element={<GovernmentDashboard />} />
-            <Route path="issues" element={<div>Government Issues</div>} />
-            <Route path="analytics" element={<GovernmentDashboard />} />
-            <Route path="settings" element={<Settings />} />
-          </Route>
-          
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+    <ErrorBoundary>
+      <Suspense fallback={<LoadingFallback />}>
+        <AuthProvider>
+          <Router>
+            <Routes>
+              <Route path="/" element={<Navigate to="/municipal" replace />} />
+              
+              {/* Municipal Routes */}
+              <Route path="/municipal" element={
+                <RoleBasedRoute role="municipal">
+                  <DashboardLayout />
+                </RoleBasedRoute>
+              }>
+                <Route index element={<MunicipalDashboard />} />
+                <Route path="issues" element={<MunicipalDashboard />} />
+                <Route path="analytics" element={<div className="p-6">Municipal Analytics</div>} />
+                <Route path="settings" element={<Settings />} />
+              </Route>
+              
+              {/* Government Routes */}
+              <Route path="/government" element={
+                <RoleBasedRoute role="government">
+                  <DashboardLayout />
+                </RoleBasedRoute>
+              }>
+                <Route index element={<GovernmentDashboard />} />
+                <Route path="issues" element={<div className="p-6">Government Issues</div>} />
+                <Route path="analytics" element={<GovernmentDashboard />} />
+                <Route path="settings" element={<Settings />} />
+              </Route>
+              
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Router>
+        </AuthProvider>
+      </Suspense>
+    </ErrorBoundary>
   );
 };
 
