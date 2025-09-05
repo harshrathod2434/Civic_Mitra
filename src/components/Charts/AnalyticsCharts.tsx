@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Scatter, ScatterChart, ZAxis } from 'recharts';
-import { Issue, Department, CityStats } from '../../types';
+import { Issue, CityStats } from '../../types';
 import { DEPARTMENTS } from '../../data/mockData';
 
 interface AnalyticsChartsProps {
@@ -12,7 +12,6 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ issues, cityStats }) 
   const [activeChart, setActiveChart] = useState<'bar' | 'line' | 'area' | 'radar' | 'scatter'>('bar');
   const [selectedDepartment, setSelectedDepartment] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
-  const [isAnimating, setIsAnimating] = useState(false);
   const [showTooltip, setShowTooltip] = useState(true);
   // Total issues reported vs resolved
   const totalIssuesData = [
@@ -137,10 +136,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ issues, cityStats }) 
   // Refresh data when filters change
   useEffect(() => {
     // In a real app, this would fetch new data based on filters
-    // For demo, we'll just trigger a re-render with animation
-    setIsAnimating(true);
-    const timer = setTimeout(() => setIsAnimating(false), 800);
-    return () => clearTimeout(timer);
+    // For demo, we'll just trigger a re-render
   }, [timeRange, selectedDepartment]);
 
   // Handle department selection for filtering

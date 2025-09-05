@@ -51,7 +51,6 @@ const MunicipalDashboard: React.FC = () => {
   if (!user?.city) return <div className="flex items-center justify-center h-64 text-black">Loading...</div>;
   
   const cityLocation = CITY_LOCATIONS[user.city] || [18.5204, 73.8567]; // Default to Pune
-  const categoryStats = getCategoryStats();
   const totalIssues = issues.filter(issue => issue.city === user.city).length;
   const resolvedIssues = issues.filter(issue => issue.city === user.city && issue.status === 'Resolved').length;
   
