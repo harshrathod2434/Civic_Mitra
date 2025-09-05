@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Issue, Category } from '../../types';
-import { ISSUES, CITY_LOCATIONS, getCategoryStats } from '../../data/mockData';
+import { ISSUES, CITY_LOCATIONS } from '../../data/mockData';
 import CategorySelector from '../../components/CategorySelector';
 import IssueMap from '../../components/Map/IssueMap';
 import IssueList from './IssueList';
