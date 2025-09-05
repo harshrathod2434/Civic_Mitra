@@ -1,12 +1,10 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { User } from '../types';
-import { USERS } from '../data/mockData';
 
 interface AuthContextType {
-  user: User | null;
-  login: (email: string, password: string) => boolean;
-  logout: () => void;
-  isAuthenticated: boolean;
+  user: User;
+  toggleRole: () => void;
+  setRole: (role: 'government' | 'municipal') => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,40 +22,32 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User>({
+    email: 'demo@civic.com',
+    role: 'municipal',
+    city: 'Pune'
+  });
 
-  const login = (email: string, password: string): boolean => {
-    // Check government credentials
-    if (email === USERS.government.email && password === USERS.government.password) {
-      setUser({
-        email,
-        role: 'government'
-      });
-      return true;
-    }
-    
-    // Check municipal credentials
-    if (email === USERS.municipal.email && password === USERS.municipal.password) {
-      setUser({
-        email,
-        role: 'municipal',
-        city: USERS.municipal.city
-      });
-      return true;
-    }
-    
-    return false;
+  const toggleRole = () => {
+    setUser(prev => ({
+      ...prev,
+      role: prev.role === 'government' ? 'municipal' : 'government',
+      city: prev.role === 'government' ? 'Pune' : undefined
+    }));
   };
 
-  const logout = () => {
-    setUser(null);
+  const setRole = (role: 'government' | 'municipal') => {
+    setUser(prev => ({
+      ...prev,
+      role,
+      city: role === 'municipal' ? 'Pune' : undefined
+    }));
   };
 
   const value = {
     user,
-    login,
-    logout,
-    isAuthenticated: !!user
+    toggleRole,
+    setRole
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -6,7 +6,7 @@ const Settings: React.FC = () => {
   
   const [formData, setFormData] = useState({
     name: 'John Doe', // Default name since User type doesn't have name property
-    email: user?.email || '',
+    email: user.email || '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',

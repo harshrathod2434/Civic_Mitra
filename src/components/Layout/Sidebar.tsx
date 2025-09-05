@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import React from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 interface SidebarProps {
@@ -9,9 +9,17 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ role, isCollapsed, onToggle }) => {
-  const { logout } = useAuth();
+  const { toggleRole } = useAuth();
+  const navigate = useNavigate();
   
   const baseUrl = role === 'government' ? '/government' : '/municipal';
+  
+  const handleRoleToggle = () => {
+    toggleRole();
+    // Navigate to the appropriate dashboard after role change
+    const newRole = role === 'government' ? 'municipal' : 'government';
+    navigate(`/${newRole}`);
+  };
   
   return (
     <div className={`bg-black text-white min-h-screen transition-all duration-300 ${isCollapsed ? 'w-16' : 'w-64'} p-4 relative`}>
@@ -33,6 +41,38 @@ const Sidebar: React.FC<SidebarProps> = ({ role, isCollapsed, onToggle }) => {
       
       <div className={`text-xl font-bold mb-8 border-b border-gray-700 pb-4 ${isCollapsed ? 'text-center' : ''}`}>
         {isCollapsed ? 'CM' : 'Civic Mitra'}
+      </div>
+      
+      {/* Role Toggle Section */}
+      <div className={`mb-6 ${isCollapsed ? 'px-1' : 'px-2'}`}>
+        <div className={`text-sm font-medium mb-2 ${isCollapsed ? 'text-center' : ''}`}>
+          {isCollapsed ? 'View' : 'Current View'}
+        </div>
+        <button
+          onClick={handleRoleToggle}
+          className={`w-full bg-gray-800 hover:bg-gray-700 text-white py-2 px-3 rounded transition duration-200 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}
+          title={isCollapsed ? `Switch to ${role === 'government' ? 'Municipal' : 'Government'}` : undefined}
+        >
+          <div className="flex items-center">
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {role === 'government' ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              )}
+            </svg>
+            {!isCollapsed && (
+              <span className="text-sm">
+                {role === 'government' ? 'Government' : 'Municipal'}
+              </span>
+            )}
+          </div>
+          {!isCollapsed && (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            </svg>
+          )}
+        </button>
       </div>
       
       <nav className="space-y-2">
@@ -65,19 +105,6 @@ const Sidebar: React.FC<SidebarProps> = ({ role, isCollapsed, onToggle }) => {
           {!isCollapsed && <span className="ml-3">Settings</span>}
         </NavLink>
       </nav>
-      
-      <div className={`absolute bottom-0 left-0 ${isCollapsed ? 'w-16' : 'w-64'} p-4`}>
-        <button 
-          onClick={logout}
-          className={`w-full bg-white text-black hover:bg-gray-200 py-2 px-4 rounded transition duration-200 flex items-center ${isCollapsed ? 'justify-center' : ''}`}
-          title={isCollapsed ? 'Logout' : undefined}
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          {!isCollapsed && <span className="ml-3">Logout</span>}
-        </button>
-      </div>
     </div>
   );
 };

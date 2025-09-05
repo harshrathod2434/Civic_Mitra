@@ -34,6 +34,54 @@ const statuses: Issue['status'][] = ['Pending', 'In Progress', 'Resolved'];
 // Categories
 const categories: Category[] = ['Pothole', 'Garbage', 'Electric Hazard', 'Stray cattle', 'Construction Debris', 'Stagnant water', 'Burning waste'];
 
+// Cloudinary image URLs for different issue categories
+const cloudinaryImages = {
+  'Pothole': [
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089918/civic-mitra/civic-mitra/pothole.webp',
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089918/civic-mitra/civic-mitra/pothole.webp',
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089918/civic-mitra/civic-mitra/pothole.webp'
+  ],
+  'Garbage': [
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089915/civic-mitra/civic-mitra/garbagel.avif',
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089915/civic-mitra/civic-mitra/garbagel.avif',
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089915/civic-mitra/civic-mitra/garbagel.avif'
+  ],
+  'Electric Hazard': [
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089914/civic-mitra/civic-mitra/electric%20hazard.webp',
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089914/civic-mitra/civic-mitra/electric%20hazard.webp',
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089914/civic-mitra/civic-mitra/electric%20hazard.webp'
+  ],
+  'Stray cattle': [
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089910/civic-mitra/civic-mitra/Stray%20Cattle.avif',
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089910/civic-mitra/civic-mitra/Stray%20Cattle.avif',
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089910/civic-mitra/civic-mitra/Stray%20Cattle.avif'
+  ],
+  'Construction Debris': [
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089912/civic-mitra/civic-mitra/construction%20debris.avif',
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089912/civic-mitra/civic-mitra/construction%20debris.avif',
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089912/civic-mitra/civic-mitra/construction%20debris.avif'
+  ],
+  'Stagnant water': [
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089920/civic-mitra/civic-mitra/stagnant%20water.jpg',
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089920/civic-mitra/civic-mitra/stagnant%20water.jpg',
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089920/civic-mitra/civic-mitra/stagnant%20water.jpg'
+  ],
+  'Burning waste': [
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089911/civic-mitra/civic-mitra/burning%20waste.webp',
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089911/civic-mitra/civic-mitra/burning%20waste.webp',
+    'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089911/civic-mitra/civic-mitra/burning%20waste.webp'
+  ]
+};
+
+// Proof photos for resolved issues (before/after comparison)
+const proofPhotos = [
+  'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089918/civic-mitra/civic-mitra/pothole.webp',
+  'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089915/civic-mitra/civic-mitra/garbagel.avif',
+  'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089914/civic-mitra/civic-mitra/electric%20hazard.webp',
+  'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089912/civic-mitra/civic-mitra/construction%20debris.avif',
+  'https://res.cloudinary.com/dyzvzef89/image/upload/v1757089920/civic-mitra/civic-mitra/stagnant%20water.jpg'
+];
+
 // Helper function to get random item from array
 const getRandomItem = <T>(array: T[]): T => array[Math.floor(Math.random() * array.length)];
 
@@ -43,6 +91,12 @@ const getRandomDate = (): string => {
   const daysAgo = Math.floor(Math.random() * 30);
   const date = new Date(now.getTime() - daysAgo * 24 * 60 * 60 * 1000);
   return date.toISOString().split('T')[0];
+};
+
+// Helper function to get random image for category
+const getCategoryImage = (category: Category): string => {
+  const images = cloudinaryImages[category];
+  return getRandomItem(images);
 };
 
 // Helper function to generate random coordinates within city bounds
@@ -81,10 +135,12 @@ const categoryToDepartment: Record<Category, Department> = {
   'Burning waste': 'Garbage'
 };
 
+// Global ID counter to ensure unique IDs across all categories
+let globalIdCounter = 1;
+
 // Generate issues for each category
 const generateIssuesForCategory = (category: Category, count: number, cityDistribution: { [key: string]: number }): Issue[] => {
   const issues: Issue[] = [];
-  let id = 1;
   
   for (const [city, cityCount] of Object.entries(cityDistribution)) {
     for (let i = 0; i < cityCount; i++) {
@@ -121,17 +177,18 @@ const generateIssuesForCategory = (category: Category, count: number, cityDistri
       }
       
       issues.push({
-        id: id++,
+        id: globalIdCounter++,
         city,
         category,
         description,
-        photo: `https://via.placeholder.com/300x200/000000/FFFFFF?text=${category.replace(' ', '+')}`,
+        photo: getCategoryImage(category),
         priority,
         status,
         location,
         reportedDate: getRandomDate(),
         address: `${area}, ${city}`,
-        department
+        department,
+        proofPhoto: status === 'Resolved' ? getRandomItem(proofPhotos) : undefined
       });
     }
   }

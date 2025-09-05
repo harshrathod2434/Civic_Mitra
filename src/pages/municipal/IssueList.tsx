@@ -2,20 +2,6 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { CSSTransition } from "react-transition-group";
 import { Issue } from "../../types";
 
-// AI-based image mapping for different categories
-const AI_IMAGES: Record<string, string> = {
-  Pothole: "https://source.unsplash.com/random/300x200?pothole,road,damage",
-  Garbage: "https://source.unsplash.com/random/300x200?garbage,waste,trash",
-  "Electric Hazard":
-    "https://source.unsplash.com/random/300x200?electric,hazard,danger",
-  "Stray cattle": "https://source.unsplash.com/random/300x200?cow,stray,animal",
-  "Construction Debris":
-    "https://source.unsplash.com/random/300x200?construction,debris,rubble",
-  "Stagnant water":
-    "https://source.unsplash.com/random/300x200?water,stagnant,mosquito",
-  "Burning waste": "https://source.unsplash.com/random/300x200?fire,smoke,garbage",
-};
-
 // Priority order for sorting
 const PRIORITY_ORDER = {
   "Very High": 0,
@@ -41,6 +27,8 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdateStatus }) => {
   const [notes, setNotes] = useState<string>("");
   const [notification, setNotification] = useState<string>("");
   const [notificationFading, setNotificationFading] = useState<boolean>(false);
+  const [sortBy, setSortBy] = useState<keyof Issue | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const modalRef = useRef<HTMLDivElement>(null);
   const nodeRef = useRef(null);
 
@@ -63,7 +51,7 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdateStatus }) => {
 
   const openIssueDetails = (issue: Issue) => {
     setSelectedIssue(issue);
-    setProofPhotoUrl(issue.proofPhoto || "");
+    setProofPhotoUrl(""); // Start with blank field for department to fill
     setNewStatus(issue.status);
     setNotes("");
     setShowModal(true);
@@ -77,6 +65,34 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdateStatus }) => {
       setNewStatus("Pending");
       setNotes("");
     }, 300);
+  };
+
+  const handleSort = (column: keyof Issue) => {
+    if (sortBy === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (column: keyof Issue) => {
+    if (sortBy !== column) {
+      return (
+        <svg className="w-4 h-4 ml-1 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+        </svg>
+      );
+    }
+    return sortDirection === 'asc' ? (
+      <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+      </svg>
+    ) : (
+      <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
+    );
   };
 
   const handleStatusUpdate = () => {
@@ -126,51 +142,72 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdateStatus }) => {
     }
   };
 
-  // Sort issues by priority and limit to top 50 per category
+  // Sort and filter issues based on user selection
   const sortedAndLimitedIssues = useMemo(() => {
-    const issuesByPriority = issues.reduce<Record<string, Issue[]>>(
-      (acc, issue) => {
-        if (!acc[issue.priority]) {
-          acc[issue.priority] = [];
+    let sortedIssues = [...issues];
+
+    // Apply sorting if a column is selected
+    if (sortBy) {
+      sortedIssues.sort((a, b) => {
+        let aVal: any;
+        let bVal: any;
+
+        // Get values based on sort column
+        switch (sortBy) {
+          case 'id':
+            aVal = Number(a.id);
+            bVal = Number(b.id);
+            break;
+          case 'category':
+            aVal = a.category.toLowerCase();
+            bVal = b.category.toLowerCase();
+            break;
+          case 'priority':
+            aVal = PRIORITY_ORDER[a.priority as keyof typeof PRIORITY_ORDER];
+            bVal = PRIORITY_ORDER[b.priority as keyof typeof PRIORITY_ORDER];
+            break;
+          case 'status':
+            aVal = a.status.toLowerCase();
+            bVal = b.status.toLowerCase();
+            break;
+          case 'reportedDate':
+            aVal = new Date(a.reportedDate).getTime();
+            bVal = new Date(b.reportedDate).getTime();
+            break;
+          default:
+            aVal = a[sortBy];
+            bVal = b[sortBy];
+            if (typeof aVal === 'string') {
+              aVal = aVal.toLowerCase();
+              bVal = bVal.toLowerCase();
+            }
         }
-        acc[issue.priority].push(issue);
-        return acc;
-      },
-      {}
-    );
 
-    Object.keys(issuesByPriority).forEach((priority) => {
-      issuesByPriority[priority] = issuesByPriority[priority]
-        .sort(
-          (a, b) =>
-            new Date(b.reportedDate).getTime() -
-            new Date(a.reportedDate).getTime()
-        )
-        .slice(0, 50);
-    });
+        // Compare values
+        let result = 0;
+        if (aVal < bVal) result = -1;
+        else if (aVal > bVal) result = 1;
+        
+        // Apply sort direction
+        return sortDirection === 'asc' ? result : -result;
+      });
+    } else {
+      // Default sorting by priority then by date if no column is selected
+      sortedIssues.sort((a, b) => {
+        const priorityDiff = PRIORITY_ORDER[a.priority as keyof typeof PRIORITY_ORDER] - 
+                           PRIORITY_ORDER[b.priority as keyof typeof PRIORITY_ORDER];
+        if (priorityDiff !== 0) return priorityDiff;
+        return new Date(b.reportedDate).getTime() - new Date(a.reportedDate).getTime();
+      });
+    }
+    
+    // Limit to reasonable number for performance
+    return sortedIssues.slice(0, 200);
+  }, [issues, sortBy, sortDirection]);
 
-    return Object.entries(issuesByPriority)
-      .sort(
-        ([a], [b]) =>
-          PRIORITY_ORDER[a as keyof typeof PRIORITY_ORDER] -
-          PRIORITY_ORDER[b as keyof typeof PRIORITY_ORDER]
-      )
-      .flatMap(([_, priorityIssues]) => priorityIssues);
-  }, [issues]);
-
-  // Get AI image for issue (only for top 50 in each category)
-  const getAIImage = (issue: Issue) => {
-    const isTopIssue = issues
-      .filter((i) => i.priority === issue.priority)
-      .sort(
-        (a, b) =>
-          new Date(b.reportedDate).getTime() -
-          new Date(a.reportedDate).getTime()
-      )
-      .slice(0, 50)
-      .some((i) => i.id === issue.id);
-
-    return isTopIssue ? AI_IMAGES[issue.category] || issue.photo : issue.photo;
+  // Get image for issue - use the actual Cloudinary photo from the issue data
+  const getIssueImage = (issue: Issue) => {
+    return issue.photo; // Use the actual Cloudinary image URL from the issue data
   };
 
   return (
@@ -180,7 +217,12 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdateStatus }) => {
           <h2 className="text-xl font-semibold text-gray-900">Issues</h2>
           <div className="text-sm text-gray-600 bg-gray-50 px-3 py-1 rounded-full">
             {sortedAndLimitedIssues.length} of {issues.length}{" "}
-            {issues.length === 1 ? "issue" : "issues"} shown (Top 50 per priority)
+            {issues.length === 1 ? "issue" : "issues"} shown
+            {sortBy && (
+              <span className="ml-2 text-blue-600">
+                (Sorted by {sortBy} {sortDirection === 'asc' ? '↑' : '↓'})
+              </span>
+            )}
           </div>
         </div>
 
@@ -212,20 +254,53 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdateStatus }) => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    ID
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('id')}
+                  >
+                    <div className="flex items-center">
+                      ID
+                      {getSortIcon('id')}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Category
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('category')}
+                  >
+                    <div className="flex items-center">
+                      Category
+                      {getSortIcon('category')}
+                    </div>
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Description
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Priority
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('priority')}
+                  >
+                    <div className="flex items-center">
+                      Priority
+                      {getSortIcon('priority')}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
-                    Status
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('status')}
+                  >
+                    <div className="flex items-center">
+                      Status
+                      {getSortIcon('status')}
+                    </div>
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={() => handleSort('reportedDate')}
+                  >
+                    <div className="flex items-center">
+                      Date
+                      {getSortIcon('reportedDate')}
+                    </div>
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-600 uppercase tracking-wider">
                     Actions
@@ -264,6 +339,9 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdateStatus }) => {
                       >
                         {issue.status}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {new Date(issue.reportedDate).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <button
@@ -390,14 +468,15 @@ const IssueList: React.FC<IssueListProps> = ({ issues, onUpdateStatus }) => {
                             </p>
                             <div className="relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden">
                               <img
-                                src={getAIImage(selectedIssue)}
-                                alt={selectedIssue.description}
+                                src={getIssueImage(selectedIssue)}
+                                alt={`${selectedIssue.category} issue at ${selectedIssue.address}`}
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
                                   const target = e.target as HTMLImageElement;
                                   target.src =
                                     "https://via.placeholder.com/800x400?text=Image+Not+Available";
                                 }}
+                                onLoad={() => console.log('Image loaded successfully in modal:', selectedIssue.photo)}
                               />
                               <div className="absolute bottom-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">
                                 {selectedIssue.category}

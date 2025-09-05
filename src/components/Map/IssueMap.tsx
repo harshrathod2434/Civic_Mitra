@@ -6,14 +6,19 @@ import 'leaflet/dist/leaflet.css';
 
 // Fix for default marker icons in React-Leaflet
 // This is needed because the default icons use relative paths that don't work in React
-const defaultIcon = new Icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+const createMarkerIcon = (color: string) => new Icon({
+  iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
   shadowSize: [41, 41]
 });
+
+// Create icons for different statuses
+const pendingIcon = createMarkerIcon('red');
+const inProgressIcon = createMarkerIcon('orange');
+const resolvedIcon = createMarkerIcon('green');
 
 interface IssueMapProps {
   issues: Issue[];
@@ -27,12 +32,12 @@ const IssueMap: React.FC<IssueMapProps> = ({ issues, center, onUpdateStatus }) =
   const [proofPhotoUrl, setProofPhotoUrl] = useState('');
   const [newStatus, setNewStatus] = useState<Issue['status']>('Pending');
   
-  const getMarkerColor = (status: Issue['status']) => {
+  const getMarkerIcon = (status: Issue['status']) => {
     switch (status) {
-      case 'Pending': return 'red';
-      case 'In Progress': return 'orange';
-      case 'Resolved': return 'green';
-      default: return 'blue';
+      case 'Pending': return pendingIcon;
+      case 'In Progress': return inProgressIcon;
+      case 'Resolved': return resolvedIcon;
+      default: return pendingIcon;
     }
   };
   
@@ -72,35 +77,73 @@ const IssueMap: React.FC<IssueMapProps> = ({ issues, center, onUpdateStatus }) =
             <Marker 
               key={issue.id} 
               position={issue.location}
-              icon={defaultIcon}
+              icon={getMarkerIcon(issue.status)}
             >
-              <Popup>
-                <div className="p-2">
-                  <h3 className="font-bold text-lg mb-2">{issue.description}</h3>
-                  <p className="mb-2"><strong>Department:</strong> {issue.department}</p>
-                  <p className="mb-2"><strong>Priority:</strong> {issue.priority}</p>
-                  <p className="mb-2"><strong>Status:</strong> {issue.status}</p>
+            <Popup maxWidth={300} minWidth={250}>
+                <div className="p-3 min-w-[250px]">
+                  <h3 className="font-bold text-lg mb-3 text-gray-800">{issue.description}</h3>
                   
-                  <div className="mb-2">
-                    <img 
-                      src={issue.photo} 
-                      alt="Issue" 
-                      className="w-full max-w-[200px] rounded-md" 
-                    />
+                  <div className="space-y-2 mb-3">
+                    <p className="text-sm"><strong>Category:</strong> {issue.category}</p>
+                    <p className="text-sm"><strong>Department:</strong> {issue.department}</p>
+                    <p className="text-sm"><strong>Priority:</strong> 
+                      <span className={`ml-1 px-2 py-1 rounded-full text-xs font-medium ${
+                        issue.priority === 'Very High' ? 'bg-red-100 text-red-800' :
+                        issue.priority === 'High' ? 'bg-orange-100 text-orange-800' :
+                        issue.priority === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        {issue.priority}
+                      </span>
+                    </p>
+                    <p className="text-sm flex items-center">
+                      <strong>Status:</strong> 
+                      <span 
+                        className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${
+                          issue.status === 'Resolved' 
+                            ? 'bg-green-100 text-green-800' 
+                            : issue.status === 'In Progress'
+                            ? 'bg-orange-100 text-orange-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {issue.status}
+                      </span>
+                    </p>
+                    <p className="text-sm"><strong>Address:</strong> {issue.address}</p>
+                    <p className="text-sm"><strong>Reported:</strong> {issue.reportedDate}</p>
+                  </div>
+                  
+                  <div className="mb-3">
+                    <strong className="text-sm">Issue Photo:</strong>
+                    <div className="mt-2">
+                      <img 
+                        src={issue.photo} 
+                        alt={`${issue.category} issue at ${issue.address}`}
+                        className="w-full h-32 object-cover rounded-md border border-gray-200 shadow-sm" 
+                        onError={(e) => {
+                          console.error('Image failed to load:', issue.photo);
+                          const target = e.currentTarget;
+                          target.src = 'https://via.placeholder.com/200x128/e5e7eb/6b7280?text=Image+Not+Available';
+                          target.className = 'w-full h-32 object-cover rounded-md border border-gray-200 shadow-sm opacity-50';
+                        }}
+                        onLoad={() => console.log('Image loaded successfully:', issue.photo)}
+                      />
+                    </div>
                   </div>
                   
                   {onUpdateStatus && (
                     <div className="mt-4">
                       <button 
                         onClick={() => handleGiveDetails(issue)}
-                        className="bg-blue-600 text-white px-3 py-1 rounded text-sm w-full"
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm w-full transition-colors duration-200"
                       >
-                        Give Details
+                        Update Status
                       </button>
                     </div>
                   )}
                 </div>
-              </Popup>
+            </Popup>
             </Marker>
           ))}
         </MapContainer>

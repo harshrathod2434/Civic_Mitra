@@ -1,26 +1,21 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import Login from './pages/Login';
 import DashboardLayout from './components/Layout/DashboardLayout';
 import MunicipalDashboard from './pages/municipal/MunicipalDashboard';
 import GovernmentDashboard from './pages/government/GovernmentDashboard';
 import Settings from './pages/Settings';
 import './App.css';
 
-// Protected route component
-const ProtectedRoute: React.FC<{ children: React.ReactNode; role?: 'government' | 'municipal' }> = ({ 
+// Route component that navigates based on current role
+const RoleBasedRoute: React.FC<{ children: React.ReactNode; role?: 'government' | 'municipal' }> = ({ 
   children, 
   role 
 }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  if (role && user?.role !== role) {
-    return <Navigate to="/" replace />;
+  if (role && user.role !== role) {
+    return <Navigate to={user.role === 'government' ? '/government' : '/municipal'} replace />;
   }
   
   return <>{children}</>;
@@ -31,19 +26,13 @@ const App: React.FC = () => {
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/login" element={<Login />} />
-          
-          <Route path="/" element={
-            <ProtectedRoute>
-              <Navigate to="/municipal" replace />
-            </ProtectedRoute>
-          } />
+          <Route path="/" element={<Navigate to="/municipal" replace />} />
           
           {/* Municipal Routes */}
           <Route path="/municipal" element={
-            <ProtectedRoute role="municipal">
+            <RoleBasedRoute role="municipal">
               <DashboardLayout />
-            </ProtectedRoute>
+            </RoleBasedRoute>
           }>
             <Route index element={<MunicipalDashboard />} />
             <Route path="issues" element={<MunicipalDashboard />} />
@@ -53,9 +42,9 @@ const App: React.FC = () => {
           
           {/* Government Routes */}
           <Route path="/government" element={
-            <ProtectedRoute role="government">
+            <RoleBasedRoute role="government">
               <DashboardLayout />
-            </ProtectedRoute>
+            </RoleBasedRoute>
           }>
             <Route index element={<GovernmentDashboard />} />
             <Route path="issues" element={<div>Government Issues</div>} />
